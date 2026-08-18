@@ -84,6 +84,13 @@ export default async function ProjectDetailPage({
 
   const row = project as ProjectRow;
   const checkList = (checks ?? []) as HealthCheck[];
+  // The newest check row is the source of truth for the "last check"
+  // snapshot, so these fields can never disagree with the Recent checks
+  // table below (even if a project-row update was lost mid-write).
+  const lastCheck = checkList[0] ?? null;
+  const lastCheckedAt = lastCheck?.checked_at ?? row.last_checked_at;
+  const lastResponseMs = lastCheck?.response_ms ?? row.last_response_ms;
+  const lastCheckStatus = lastCheck?.status ?? row.last_status;
   const status = row.last_status ?? "unknown";
   const paused = status === "paused";
 
@@ -141,12 +148,12 @@ export default async function ProjectDetailPage({
             label="Supabase account"
             value={row.connected_accounts?.display_name ?? "-"}
           />
-          <Field label="Last check" value={<TimeText value={row.last_checked_at} />} />
+          <Field label="Last check" value={<TimeText value={lastCheckedAt} />} />
           <Field
             label="Response time"
-            value={formatResponseMs(row.last_response_ms)}
+            value={formatResponseMs(lastResponseMs)}
           />
-          <Field label="Status" value={statusLabel(status)} />
+          <Field label="Status" value={statusLabel(lastCheckStatus)} />
           <Field
             label="Next scheduled check"
             value={

@@ -476,19 +476,38 @@ async function recordResult(
     throw new Error(`health_checks insert failed: ${insertError.message}`);
   }
 
-  await admin
-    .from("monitored_projects")
-    .update({
-      last_checked_at: now,
-      last_status: input.status,
-      last_response_ms: input.responseMs,
-      last_error: input.error ?? null,
-      consecutive_failures: failures,
-      failure_notified_at: failureNotifiedAt,
-      next_check_at: nextCheckAt.toISOString(),
-      updated_at: now,
-    })
-    .eq("id", project.id);
+  // Keep the project row in sync with the check we just recorded. This
+  // update must not fail silently: a recorded check with a stale project
+  // row is how "Last check" drifts from the recent-checks table. Retry
+  // once, then surface the failure loudly.
+  const projectUpdate = {
+    last_checked_at: now,
+    last_status: input.status,
+    last_response_ms: input.responseMs,
+    last_error: input.error ?? null,
+    consecutive_failures: failures,
+    failure_notified_at: failureNotifiedAt,
+    next_check_at: nextCheckAt.toISOString(),
+    updated_at: now,
+  };
+  let updateError: { message: string } | null = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { error } = await admin
+      .from("monitored_projects")
+      .update(projectUpdate)
+      .eq("id", project.id);
+    if (!error) {
+      updateError = null;
+      break;
+    }
+    updateError = error;
+  }
+  if (updateError) {
+    console.error(
+      `[worker] project update failed after check for ${project.project_ref}:`,
+      updateError.message
+    );
+  }
 
   if (recoveryEmail && input.status === "healthy") {
     const profile = await loadProfile(admin, project.user_id, profileCache);
