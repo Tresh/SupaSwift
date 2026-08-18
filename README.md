@@ -55,9 +55,9 @@ It creates:
 - RLS policies (users only see their own data) and worker functions
   (`claim_due_checks`, `prune_health_history`)
 
-Enable **Email** auth provider (email/password + magic link) in
-Authentication → Providers. If you want password resets, enable the "Confirm
-email" settings you prefer.
+Enable **Email** auth provider (email/password) in Authentication →
+Providers. If you want password resets, enable the "Confirm email" settings
+you prefer.
 
 ### 2. Supabase OAuth app (the "Connect Supabase" integration)
 
@@ -94,26 +94,48 @@ npm install
 npm run dev        # http://localhost:8080
 ```
 
-### 5. The scheduler (choose one)
+### 5. The scheduler
 
 Checks are due at most once per 24h per project, so the scheduler itself only
 needs to run every few minutes to *find* due checks.
 
-- **Vercel Cron** - the repo includes `crons.json` (every 5 minutes →
-  `/api/cron/checks`). Vercel's `x-vercel-cron` header is accepted
-  automatically.
-- **Any cron service** (GitHub Actions, cron-job.org, UptimeRobot, …) -
-  `POST /api/cron/checks` with header `x-cron-secret: <CRON_SECRET>`.
+**Production on Vercel (Hobby):** Vercel Cron is limited to **once per day**
+on the Hobby plan, so an **external cron service** is the recommended
+trigger. Point any cron provider (cron-job.org, GitHub Actions, UptimeRobot,
+Healthchecks, …) at:
+
+```text
+POST https://<your-domain>/api/cron/checks
+Header: x-cron-secret: <CRON_SECRET>
+Every 5 minutes
+```
+
+The endpoint verifies the secret and then runs the due checks server-side
+(`runDueChecks()`). The external cron is only the trigger - all check logic
+stays inside SupaSwift.
+
+Other options:
+
+- **Vercel Cron (Pro/Enterprise)** - the repo includes `crons.json` (every 5
+  minutes → `/api/cron/checks`). Vercel's `x-vercel-cron` header is accepted
+  automatically. On Hobby, restrict the schedule to daily or use the
+  external-cron approach above.
 - **Self-hosted worker** - `npm run worker` runs the same logic in-process
   (scans every 60s, loads `.env.local`).
 
 The scheduler claims due rows atomically (`FOR UPDATE SKIP LOCKED`), so
 multiple workers can run without duplicating checks.
 
+> **Note:** each health check is bounded by a 10s client timeout, and with the
+> default 24h interval only a few projects are due per run. If you ever have
+> many projects come due at once on Vercel Hobby (functions capped at 60s),
+> the run may exceed the function limit - raise the schedule frequency or
+> move the worker to a self-hosted box.
+
 ## Pages
 
 - `/` - landing (redirects to `/dashboard` when signed in)
-- `/auth` - sign in / sign up / magic link (modal-free, single page)
+- `/auth` - sign in / sign up (single page)
 - `/dashboard` - "Your Projects" cards with status, last check, response, next check
 - `/projects` - all projects across connected accounts; pick what to watch
 - `/projects/[ref]` - details, recent checks, **Check now**, pause / resume / remove
