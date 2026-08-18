@@ -52,24 +52,6 @@ function AuthForm() {
     }
   }
 
-  async function sendMagicLink() {
-    setError(null);
-    setNotice(null);
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: `${window.location.origin}${next}` },
-      });
-      if (error) throw error;
-      setNotice("Check your email for a sign-in link.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   const isConnectFlow = next === "/api/connect/supabase";
 
   return (
@@ -165,20 +147,6 @@ function AuthForm() {
             </button>
           </form>
 
-          <div className="my-5 flex items-center gap-3">
-            <span className="h-px flex-1 bg-zinc-200" />
-            <span className="text-xs text-zinc-400">or</span>
-            <span className="h-px flex-1 bg-zinc-200" />
-          </div>
-
-          <button
-            type="button"
-            onClick={sendMagicLink}
-            disabled={loading || !email}
-            className="btn btn-secondary w-full"
-          >
-            Email me a sign-in link
-          </button>
         </div>
 
         <p className="mt-6 text-center text-xs text-zinc-400">
