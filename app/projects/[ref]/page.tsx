@@ -12,6 +12,7 @@ import { statusLabel } from "@/lib/status";
 import {
   formatCheckTime,
   formatNextCheck,
+  formatRelative,
   formatResponseMs,
 } from "@/lib/time";
 import type { HealthCheck, MonitoredProject } from "@/lib/types";
@@ -72,6 +73,14 @@ export default async function ProjectDetailPage({
     .eq("project_id", project.id)
     .order("checked_at", { ascending: false })
     .limit(15);
+
+  const { data: cronState } = await supabase
+    .from("app_state")
+    .select("value")
+    .eq("key", "last_cron_run_at")
+    .maybeSingle();
+  const cronRanAt =
+    (cronState?.value as { at?: string } | null)?.at ?? null;
 
   const row = project as ProjectRow;
   const checkList = (checks ?? []) as HealthCheck[];
@@ -145,6 +154,10 @@ export default async function ProjectDetailPage({
                 ? formatNextCheck(row.next_check_at)
                 : "Paused. Resume monitoring"
             }
+          />
+          <Field
+            label="Scheduler last ran"
+            value={cronRanAt ? formatRelative(cronRanAt) : "-"}
           />
         </dl>
         {row.last_error && (

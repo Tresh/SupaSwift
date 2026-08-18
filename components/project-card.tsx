@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { StatusPill } from "@/components/status-dot";
 import {
+  formatCheckTime,
   formatNextCheck,
-  formatRelative,
   formatResponseMs,
 } from "@/lib/time";
 import type { MonitoredProject } from "@/lib/types";
@@ -70,7 +70,7 @@ export function ProjectCard({ project, accountName }: Props) {
       <div className="mt-4 grid grid-cols-1 gap-y-2.5 border-t border-zinc-100 pt-4 sm:grid-cols-3 sm:gap-3">
         <Stat
           label="Last check"
-          value={formatRelative(project.last_checked_at)}
+          value={formatCheckTime(project.last_checked_at)}
         />
         <Stat label="Response" value={formatResponseMs(project.last_response_ms)} />
         <Stat

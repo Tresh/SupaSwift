@@ -142,6 +142,14 @@ export async function runDueChecks(limit = 25): Promise<RunResult> {
 
   await pruneOldHistory(admin);
 
+  // Heartbeat so the UI can show when the scheduler last ran. The cron
+  // fires every few minutes; per-project checks are at most daily.
+  await admin.from("app_state").upsert({
+    key: "last_cron_run_at",
+    value: { at: new Date().toISOString() },
+    updated_at: new Date().toISOString(),
+  });
+
   return { claimed: projects.length, completed, failed };
 }
 
