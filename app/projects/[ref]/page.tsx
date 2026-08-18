@@ -7,10 +7,10 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { CheckHistory } from "@/components/check-history";
 import { ProjectActions } from "@/components/project-actions";
 import { StatusPill } from "@/components/status-dot";
+import { TimeText } from "@/components/time-text";
 import { createClient } from "@/lib/supabase/server";
 import { statusLabel } from "@/lib/status";
 import {
-  formatCheckTime,
   formatNextCheck,
   formatRelative,
   formatResponseMs,
@@ -40,7 +40,7 @@ export async function generateMetadata({
   };
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
       <dt className="text-[11px] font-medium uppercase tracking-wide text-zinc-400">
@@ -141,7 +141,7 @@ export default async function ProjectDetailPage({
             label="Supabase account"
             value={row.connected_accounts?.display_name ?? "-"}
           />
-          <Field label="Last check" value={formatCheckTime(row.last_checked_at)} />
+          <Field label="Last check" value={<TimeText value={row.last_checked_at} />} />
           <Field
             label="Response time"
             value={formatResponseMs(row.last_response_ms)}

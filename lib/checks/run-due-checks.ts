@@ -453,14 +453,28 @@ async function recordResult(
 
   const now = new Date().toISOString();
 
-  await admin.from("health_checks").insert({
+  // Insert the check. If the `details` column is missing (migration 0002
+  // not yet applied), fall back to inserting without it so checks still
+  // record instead of failing silently.
+  const checkRow = {
     project_id: project.id,
     status: input.status,
     response_ms: input.responseMs,
     error_message: input.error ?? null,
-    details: input.details ?? null,
     checked_at: now,
-  });
+  } as Record<string, unknown>;
+  if (input.details !== undefined) checkRow.details = input.details;
+
+  const { error: insertError } = await admin.from("health_checks").insert(checkRow);
+  if (insertError && /details/i.test(insertError.message)) {
+    delete checkRow.details;
+    const { error: retryError } = await admin.from("health_checks").insert(checkRow);
+    if (retryError) {
+      throw new Error(`health_checks insert failed: ${retryError.message}`);
+    }
+  } else if (insertError) {
+    throw new Error(`health_checks insert failed: ${insertError.message}`);
+  }
 
   await admin
     .from("monitored_projects")

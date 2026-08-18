@@ -5,7 +5,8 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { CheckDetailRow } from "@/components/check-detail";
 import { StatusPill } from "@/components/status-dot";
-import { formatCheckTime, formatResponseMs } from "@/lib/time";
+import { TimeText } from "@/components/time-text";
+import { formatResponseMs } from "@/lib/time";
 import type { HealthCheck } from "@/lib/types";
 
 const MOBILE_SHOW = 5;
@@ -95,7 +96,7 @@ export function CheckHistory({ checks }: { checks: HealthCheck[] }) {
                       className="flex items-center gap-3 px-4 py-2.5"
                     >
                       <span className="min-w-0 flex-1 truncate text-sm text-zinc-500">
-                        {formatCheckTime(check.checked_at)}
+                        <TimeText value={check.checked_at} />
                       </span>
                       <StatusPill status={check.status} />
                       <span className="shrink-0 text-sm text-zinc-500">

@@ -1,11 +1,8 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { StatusPill } from "@/components/status-dot";
-import {
-  formatCheckTime,
-  formatNextCheck,
-  formatResponseMs,
-} from "@/lib/time";
+import { TimeText } from "@/components/time-text";
+import { formatNextCheck, formatResponseMs } from "@/lib/time";
 import type { MonitoredProject } from "@/lib/types";
 
 interface Props {
@@ -13,7 +10,7 @@ interface Props {
   accountName?: string | null;
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-3 sm:block">
       <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400">
@@ -68,10 +65,7 @@ export function ProjectCard({ project, accountName }: Props) {
       )}
 
       <div className="mt-4 grid grid-cols-1 gap-y-2.5 border-t border-zinc-100 pt-4 sm:grid-cols-3 sm:gap-3">
-        <Stat
-          label="Last check"
-          value={formatCheckTime(project.last_checked_at)}
-        />
+        <Stat label="Last check" value={<TimeText value={project.last_checked_at} />} />
         <Stat label="Response" value={formatResponseMs(project.last_response_ms)} />
         <Stat
           label="Next check"

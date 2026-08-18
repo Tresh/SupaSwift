@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Copy, X } from "lucide-react";
 import { StatusPill } from "@/components/status-dot";
-import { formatCheckTime, formatResponseMs } from "@/lib/time";
+import { TimeText } from "@/components/time-text";
+import { formatResponseMs } from "@/lib/time";
 import type { HealthCheck } from "@/lib/types";
 
 interface Props {
@@ -75,7 +76,7 @@ export function CheckDetailRow({ check, className = "" }: Props) {
         title="View report"
       >
         <td className="whitespace-nowrap px-4 py-2.5 text-zinc-600">
-          {formatCheckTime(check.checked_at)}
+          <TimeText value={check.checked_at} />
         </td>
         <td className="px-4 py-2.5">
           <StatusPill status={check.status} />
@@ -118,7 +119,7 @@ export function CheckDetailRow({ check, className = "" }: Props) {
                 <div className="flex items-center gap-2.5">
                   <StatusPill status={check.status} />
                   <span className="text-sm text-zinc-500">
-                    {formatCheckTime(check.checked_at)}
+                    <TimeText value={check.checked_at} />
                   </span>
                 </div>
                 <span className="text-sm text-zinc-500">
